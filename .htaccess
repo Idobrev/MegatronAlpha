@@ -1,0 +1,7 @@
+RewriteEngine on
+#RewriteBase /Testing/
+
+RewriteRule (index.html)$ ./Megatron/index.php?url=$1
+#RewriteRule ^/[^\/\.]+/(css|js)/(.*)$ $1/$2
+
+#./Megatron/public/absorbed/index.html

@@ -1,0 +1,34 @@
+body {
+	height:940px;
+	background-image: url("../img/Megatron.jpeg");
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+}
+#content{
+	width: 800px;
+	height:100%;
+	margin-right: auto;
+	margin-left: auto;
+	background:rgba(255,255,255,0.5);
+}
+.hello {
+	width : 200px;
+	height: 50px;
+	border: 1px dashed red;
+}
+.helloworld {
+	width : 200px;
+	height: 50px;
+	border: 1px dashed red;
+}
+.navigator {
+	width :1200px;
+}
+.navigator:after {
+    content: ".";
+    display: block;
+    clear: both;
+    visibility: hidden;
+    line-height: 0;
+    height: 0;
+}
