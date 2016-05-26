@@ -1,1 +1,1 @@
-console.log('hello');
+console.log('index js in "legacy" page');
