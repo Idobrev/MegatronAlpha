@@ -3,5 +3,5 @@ RewriteEngine on
 #rewrite in an empty url is hit to redirect to index.html - this is just a prefference. EX: htt://<website>/. Hit enter and redirect to index.html
 RewriteRule ^$ index.html [QSA]
 #rewrite every php or html page to megatron for now.
-RewriteRule ^(.+)$ ./Megatron/index.php?url=$1
+#RewriteRule ^(.+\.html|.+\.php)$ ./Megatron/index.php?url=$1
 #RewriteRule ^/[^\/\.]+/(css|js)/(.*)$ $1/$2

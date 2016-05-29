@@ -7,21 +7,22 @@
 	// Configuration                
 	// =============================
 	
-	$title = 'Index of {{path}}';
+	$title = 'Index of Test/{{path}}'; //add the root dir title here before the {{path}} to show the root index
 	$subtitle = '{{files}} objects in this folder, {{size}} total'; // Empty to disable
 	$showParent = true; // Display a (parent directory) link
 	$showDirectories = true;
 	$showHiddenFiles = false; // Display files starting with "." too
-	$alignment = 'left'; // You can use 'left' or 'center'
+	$alignment = 'center'; // You can use 'left' or 'center'
 	$showIcons = true;
 	$dateFormat = 'd/m/y H:i'; // Used in date() function
 	$sizeDecimals = 1;
+	$activateDirLinks = true; // whether the user can click on the directories and list them or not.
 	$robots = 'noindex, nofollow'; // Avoid robots by default
 	$showFooter = false; // Display the "Powered by" footer
+	$rootListingDirFolder = './';   //-------   ./ here is the default directory in which the script resides (its root). Be careful here, if you put / this will list root on the machine, use ./ as root and go from there. A directory up is ../  Ex: if you want to start listing from the parent dir of the script use './../'
 	
 	// =============================
 	// =============================
-	
 	// Who am I?
 	$_self = basename($_SERVER['PHP_SELF']);
 	$_path = str_replace('\\', '/', dirname($_SERVER['PHP_SELF']));
@@ -54,7 +55,7 @@
 			if (!$show_folders && $isdir) continue;
 			$item = array('name' => $file, 'isdir' => $isdir, 'size' => $isdir ? 0 : filesize($path . $file), 'time' => filemtime($path . $file));
 			if ($isdir) {
-				//uncomment for recursive search
+				//uncomment for recursive search. Can be full recursive. Maybe a future expansion with drop downs?
 				//$innerDirs = ls($item['name'], $show_folders, $show_hidden);
 				//$item['innerDirs'] = $innerDirs;
 				$ls_d[] = $item;
@@ -67,16 +68,13 @@
 		return array_merge($ls_d, $ls);
 	}
 	
-	// Get the list of files
-	$dirTolist = isset($_GET['d']) ? $_GET['d'] : '.';
-	$items = ls($dirTolist, $showDirectories, $showHiddenFiles);
-	var_dump($_path);
-	/*
-	$dr = opendir(__DIR__);
-	while (readdir($dr) !== false)
-	var_dump(readdir($dr));
-	*/
-	#exit;
+	$dirTolist = @$_GET['d'];
+	// Get the directory to list. Tons of checks to prevent users from listing dirs outside root of the website
+	if ( !isset($dirTolist) || substr_count($dirTolist, '..') > 0 || strpos($dirTolist, '/') === 0 || strpos($dirTolist, '\\') === 0 || strpos($dirTolist, ':\\') || strpos($dirTolist, ':/') || !is_dir( $rootListingDirFolder . $dirTolist) || !$activateDirLinks )
+		$dirTolist = '';
+	
+	$currentList = $rootListingDirFolder . $dirTolist;
+	$items = ls($currentList, $showDirectories, $showHiddenFiles);
 	
 	// Sort it
 	function sortByName($a, $b) { return ($a['isdir'] == $b['isdir'] ? strtolower($a['name']) > strtolower($b['name']) : $a['isdir'] < $b['isdir']); }
@@ -93,7 +91,7 @@
 	if ($_sort_reverse) $items = array_reverse($items);
 	
 	// Add parent
-	if ($showParent && isset($_GET['d'])) array_unshift($items, array(
+	if ($showParent && $dirTolist != $rootListingDirFolder && $dirTolist != '') array_unshift($items, array(
 		'name' => '..',
 		'isparent' => true,
 		'isdir' => true,
@@ -110,8 +108,8 @@
 	
 	// Titles parser
 	function getTitle($title) {
-		global $_path, $_total, $_total_size, $sizeDecimals;
-		return str_replace(array('{{path}}', '{{files}}', '{{size}}'), array($_path, $_total, humanizeFilesize($_total_size, $sizeDecimals)), $title);
+		global $_path, $_total, $_total_size, $sizeDecimals, $dirTolist;
+		return str_replace(array('{{path}}', '{{files}}', '{{size}}'), array($dirTolist, $_total, humanizeFilesize($_total_size, $sizeDecimals)), $title);
 	}
 	
 	// Link builder
@@ -119,7 +117,7 @@
 		global $_self;
 		$params = $_GET;
 		foreach ($changes as $k => $v) if (is_null($v)) unset($params[$k]); else $params[$k] = $v;
-		foreach ($params as $k => $v) $params[$k] = urlencode($k) . '=' . urlencode($v);
+		foreach ($params as $k => $v) $params[$k] = $k . '=' . $v;
 		return empty($params) ? $_self : $_self . '?' . implode($params, '&');
 	}
 
@@ -330,10 +328,12 @@
 					<span class="size"><?php echo $item['isdir'] ? '-' : humanizeFilesize($item['size'], $sizeDecimals) ?></span>
 					
 					<span class="date"><?php echo (@$item['isparent']) ? '-' : date($dateFormat, $item['time']) ?></span>
-					<?php if ($item['isdir']): 
-						$currentListedDir = isset($_GET['d'])? $_GET['d'] : '.';
+					<?php if ($item['isdir']):
+						$currentDir = $dirTolist != '' ? $dirTolist . '/' : '';
+						$currentDir = $item['name'] == '..' ? str_replace('.', '', dirname($dirTolist)) : $currentDir . htmlentities($item['name']);
+						$link = $activateDirLinks ? $_SERVER['PHP_SELF'] . '?d=' . $currentDir : '#';
 					?>
-						<a href="<?php echo $_SERVER['PHP_SELF'] . '?d=' . $currentListedDir . '/' . htmlentities($item['name']) ?>" class="name <?php if ($showIcons) echo $item['isdir'] ? 'directory' : 'file' ?>"><?php echo htmlentities($item['name']) . ($item['isdir'] ? ' /' : '') ?></a>
+						<a href="<?php echo $link ?>" class="name <?php if ($showIcons) echo $item['isdir'] ? 'directory' : 'file' ?>"><?php echo htmlentities($item['name']) . ($item['isdir'] ? ' /' : '') ?></a>
 					<?php else: ?>
 						<span class="name" ><?php echo htmlentities($item['name']) . ($item['isdir'] ? ' /' : '') ?></span>
 					<?php endif; ?>
